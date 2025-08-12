@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import ReactPaginate from 'react-paginate';
 import SearchBar from '../SearchBar/SearchBar';
@@ -15,19 +15,20 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-  const [errorToastShown, setErrorToastShown] = useState(false);
+
+  const shownErrorFor = useRef<{ query: string; page: number } | null>(null);
 
   const { data, isLoading, isError } = useQuery<MovieResponse, Error>({
     queryKey: ['movies', query, page],
     queryFn: () => fetchMovies(query, page),
     enabled: query.trim().length > 0,
-    placeholderData: (prev) => prev ?? undefined,
   });
 
   const handleSearch = (searchQuery: string) => {
     if (searchQuery === query) return;
     setQuery(searchQuery);
     setPage(1);
+    shownErrorFor.current = null;
   };
 
   const handleSelect = (movie: Movie) => {
@@ -37,18 +38,18 @@ export default function App() {
   const totalPages = data?.total_pages ?? 0;
   const movies = data?.results ?? [];
 
-    useEffect(() => {
-    setErrorToastShown(false);
-  }, [query, page]);
-
-    useEffect(() => {
-    if (!isLoading && data && data.results.length === 0 && query.trim() !== '') {
-      if (!errorToastShown) {
-        toast.error('No movies found for your request.');
-        setErrorToastShown(true);
-      }
+  useEffect(() => {
+    if (
+      !isLoading &&
+      data &&
+      data.results.length === 0 &&
+      query.trim() !== '' &&
+      !(shownErrorFor.current?.query === query && shownErrorFor.current?.page === page)
+    ) {
+      toast.error('No movies found for your request.');
+      shownErrorFor.current = { query, page };
     }
-  }, [data, query, errorToastShown, isLoading]);
+  }, [data, query, page, isLoading]);
 
   return (
     <div className={css.app}>
@@ -62,7 +63,10 @@ export default function App() {
           pageCount={totalPages}
           pageRangeDisplayed={5}
           marginPagesDisplayed={1}
-          onPageChange={({ selected }) => setPage(selected + 1)}
+          onPageChange={({ selected }) => {
+            setPage(selected + 1);
+            shownErrorFor.current = null;
+          }}
           forcePage={page - 1}
           containerClassName={css.pagination}
           activeClassName={css.active}
