@@ -15,6 +15,7 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [errorToastShown, setErrorToastShown] = useState(false);
 
   const { data, isLoading, isError } = useQuery<MovieResponse, Error>({
     queryKey: ['movies', query, page],
@@ -27,6 +28,7 @@ export default function App() {
     if (searchQuery === query) return;
     setQuery(searchQuery);
     setPage(1);
+    setErrorToastShown(false);
   };
 
   const handleSelect = (movie: Movie) => {
@@ -38,9 +40,14 @@ export default function App() {
 
   useEffect(() => {
     if (data && data.results.length === 0 && query.trim() !== '') {
-      toast.error('No movies found for your request.');
+      if (!errorToastShown) {
+        toast.error('No movies found for your request.');
+        setErrorToastShown(true);
+      }
+    } else {
+      setErrorToastShown(false);
     }
-  }, [data, query]);
+  }, [data, query, errorToastShown]);
 
   return (
     <div className={css.app}>
@@ -54,7 +61,10 @@ export default function App() {
           pageCount={totalPages}
           pageRangeDisplayed={5}
           marginPagesDisplayed={1}
-          onPageChange={({ selected }) => setPage(selected + 1)}
+          onPageChange={({ selected }) => {
+            setPage(selected + 1);
+            setErrorToastShown(false);
+          }}
           forcePage={page - 1}
           containerClassName={css.pagination}
           activeClassName={css.active}
