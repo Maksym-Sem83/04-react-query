@@ -28,7 +28,6 @@ export default function App() {
     if (searchQuery === query) return;
     setQuery(searchQuery);
     setPage(1);
-    setErrorToastShown(false);
   };
 
   const handleSelect = (movie: Movie) => {
@@ -38,16 +37,18 @@ export default function App() {
   const totalPages = data?.total_pages ?? 0;
   const movies = data?.results ?? [];
 
-  useEffect(() => {
-    if (data && data.results.length === 0 && query.trim() !== '') {
+    useEffect(() => {
+    setErrorToastShown(false);
+  }, [query, page]);
+
+    useEffect(() => {
+    if (!isLoading && data && data.results.length === 0 && query.trim() !== '') {
       if (!errorToastShown) {
         toast.error('No movies found for your request.');
         setErrorToastShown(true);
       }
-    } else {
-      setErrorToastShown(false);
     }
-  }, [data, query, errorToastShown]);
+  }, [data, query, errorToastShown, isLoading]);
 
   return (
     <div className={css.app}>
@@ -61,10 +62,7 @@ export default function App() {
           pageCount={totalPages}
           pageRangeDisplayed={5}
           marginPagesDisplayed={1}
-          onPageChange={({ selected }) => {
-            setPage(selected + 1);
-            setErrorToastShown(false);
-          }}
+          onPageChange={({ selected }) => setPage(selected + 1)}
           forcePage={page - 1}
           containerClassName={css.pagination}
           activeClassName={css.active}
