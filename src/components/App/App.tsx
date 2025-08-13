@@ -7,7 +7,8 @@ import Loader from '../Loader/Loader';
 import ErrorMessage from '../ErrorMessage/ErrorMessage';
 import MovieModal from '../MovieModal/MovieModal';
 import { fetchMovies } from '../../services/movieService';
-import type { MovieResponse, Movie } from '../../types/movie';
+import type { Movie } from '../../types/movie';
+import type { MovieResponse } from '../../services/movieService';
 import css from './App.module.css';
 import toast from 'react-hot-toast';
 
